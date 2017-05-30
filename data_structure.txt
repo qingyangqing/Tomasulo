@@ -1,0 +1,27 @@
+>> Instruction Buffer --> list
+Read assembly code in by lines
+
+>> RATs --> list
+tag
+
+>> Reservation Station --> list 
+busy | op | tag_1st | value_1st | valid_1st | tag_2nd | value_2nd | valid_2nd | dest_tag 
+
+>> Functional Unit --> FIFO queue
+cycle | op | value1 | value2 | dest_tag
+
+>> Ld/Sd --> FIFO queue
+ready | op | address | data | dest_tag | immediate | reg_tag | reg_value | valid
+
+>> ld_sd_exe 
+busy | cycle | value1 | value2 | dest_tag 
+
+>> ld_sd_mem 
+busy | cycle | addr | dest_tag 
+
+>> cdb 
+valid | value | dest_tag
+
+>> ROB --> FIFO queue
+PC | value | dest | issue | exe | mem | cdb | commit 
+

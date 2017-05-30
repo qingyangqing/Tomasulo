@@ -1,0 +1,4 @@
+Ld F5 8(R0)
+Mult.d F5 F5 F5
+Sd F5 8(R1)
+Ld F6 8(R1)
