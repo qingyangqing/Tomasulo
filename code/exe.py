@@ -47,7 +47,7 @@ def find_ROB_entry(ROB, tag):
     return index
 
 # function: functional units execution 
-def fu_exe(fu, fu_results, ROB, time_fu, cycle):
+def fu_exe(fu, fu_results, ROB, time_fu, cycle, PC):
     if len(fu)!=0:
         for element in fu:
             element.cycle += 1
@@ -61,27 +61,37 @@ def fu_exe(fu, fu_results, ROB, time_fu, cycle):
             ROB[index].exe.append(cycle)
             # calculation result
             fu_results.append(fu_result())
+            fu_results[-1].dest_tag = fu[0].dest_tag
             if (fu[0].op=='Add')|(fu[0].op=='Add.d')|(fu[0].op=='Addi'):
                 fu_results[-1].value = fu[0].value1 + fu[0].value2
             elif (fu[0].op=='Sub')|(fu[0].op=='Sub.d'):
                 fu_results[-1].value = fu[0].value1 - fu[0].value2
             elif (fu[0].op=='Mult.d'):
                 fu_results[-1].value = fu[0].value1 * fu[0].value2
+            elif (fu[0].op=='Bne'):
+                fu_results.pop()
+                if fu[0].value1 == fu[0].value2:
+                    PC.PC += 1
+                    PC.valid = 1
+                else:
+                    index = find_ROB_entry(ROB, fu[0].dest_tag)
+                    offset = ROB[index].dest_tag
+                    PC.PC = int(PC.PC + 1 + offset/4)
+                    PC.valid = 1
             else:
                 pass
-            fu_results[-1].dest_tag = fu[0].dest_tag
             # remove from fu 
             fu.popleft()
-    
-# function: execution
-def exe(fu_int_adder, time_fu_int_adder,
-        fu_fp_adder, time_fu_fp_adder,
-        fu_fp_multi, time_fu_fp_multi, results_buffer,
-        rs_int_adder, rs_fp_adder, rs_fp_multi, 
-        ld_sd_exe, time_ld_sd_exe, ld_sd_queue,
-        cycle, ROB):
-    '''execution in fu and ld_sd address calculation'''
-    # ld_sd_execution 
+
+# function: find ROB entry by tag
+def find_ROB_entry(ROB, tag):
+    for index in range(len(ROB)):
+        if ROB[index].ROB_tag == tag:
+            break
+    return index
+
+# function: ld_sd_execution 
+def ld_sd_execution(ld_sd_exe, time_ld_sd_exe, ld_sd_queue, ROB, cycle):
     if ld_sd_exe.busy == 1:
         # write down starting cycle
         if ld_sd_exe.cycle == 0:            
@@ -104,10 +114,20 @@ def exe(fu_int_adder, time_fu_int_adder,
             index = find_ROB_entry(ROB, element.dest_tag)
             ROB[index].exe.append(cycle)
             ld_sd_exe.busy = 0
+
+# function: execution
+def exe(fu_int_adder, time_fu_int_adder,
+        fu_fp_adder, time_fu_fp_adder,
+        fu_fp_multi, time_fu_fp_multi, results_buffer,
+        rs_int_adder, rs_fp_adder, rs_fp_multi, 
+        ld_sd_exe, time_ld_sd_exe, ld_sd_queue,
+        cycle, ROB, PC):
+    '''execution in fu and ld_sd address calculation'''
+    ld_sd_execution(ld_sd_exe, time_ld_sd_exe, ld_sd_queue, ROB, cycle) 
     # functional units 
-    fu_exe(fu_int_adder, results_buffer, ROB, time_fu_int_adder, cycle)
-    fu_exe(fu_fp_adder, results_buffer, ROB, time_fu_fp_adder, cycle)
-    fu_exe(fu_fp_multi, results_buffer, ROB, time_fu_fp_multi, cycle)
+    fu_exe(fu_int_adder, results_buffer, ROB, time_fu_int_adder, cycle, PC)
+    fu_exe(fu_fp_adder, results_buffer, ROB, time_fu_fp_adder, cycle, PC)
+    fu_exe(fu_fp_multi, results_buffer, ROB, time_fu_fp_multi, cycle, PC)
     '''fetch instructions from rs and ld_sd_queue'''
     # from ld_sd_queue
     # check valid ins in ld_sd_queue 
@@ -119,6 +139,8 @@ def exe(fu_int_adder, time_fu_int_adder,
         ld_sd_exe.value1 = ld_sd_queue[index].reg_value
         ld_sd_exe.value2 = ld_sd_queue[index].immediate
         ld_sd_exe.dest_tag = ld_sd_queue[index].ld_sd_tag
+        if ROB[find_ROB_entry(ROB, ld_sd_queue[index].dest_tag)].issue[0] < cycle:
+            ld_sd_execution(ld_sd_exe, time_ld_sd_exe, ld_sd_queue, ROB, cycle)
     # from rs 
     # int_adder
     # fetch valid instruction 
@@ -126,6 +148,9 @@ def exe(fu_int_adder, time_fu_int_adder,
         index = check_valid_ins_in_rs(rs_int_adder)
         fu_int_adder.append(fu_entry())
         add_entry_into_fu(fu_int_adder, rs_int_adder[index])
+        # check if it's a waiting instruction
+        if ROB[find_ROB_entry(ROB, rs_int_adder[index].dest_tag)].issue[0] < cycle:
+            fu_exe(fu_int_adder, results_buffer, ROB, time_fu_int_adder, cycle, PC)
         # remove ins from rs 
         rs_int_adder[index].busy = 0
     # fp_adder
@@ -133,6 +158,8 @@ def exe(fu_int_adder, time_fu_int_adder,
         index = check_valid_ins_in_rs(rs_fp_adder)
         fu_fp_adder.append(fu_entry())
         add_entry_into_fu(fu_fp_adder, rs_fp_adder[index])
+        if ROB[find_ROB_entry(ROB, rs_fp_adder[index].dest_tag)].issue[0] < cycle:
+            fu_exe(fu_fp_adder, results_buffer, ROB, time_fu_fp_adder, cycle, PC)
         # remove ins from rs 
         rs_fp_adder[index].busy = 0
     # fp_multi
@@ -140,6 +167,8 @@ def exe(fu_int_adder, time_fu_int_adder,
         index = check_valid_ins_in_rs(rs_fp_multi)
         fu_fp_multi.append(fu_entry())
         add_entry_into_fu(fu_fp_multi, rs_fp_multi[index])
+        if ROB[find_ROB_entry(ROB, rs_fp_multi[index].dest_tag)].issue[0] < cycle:
+            fu_exe(fu_fp_multi, results_buffer, ROB, time_fu_fp_multi, cycle, PC)
         # remove ins from rs 
         rs_fp_multi[index].busy = 0
 

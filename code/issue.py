@@ -33,6 +33,8 @@ def put_ins_into_ROB(ROB, size_ROB, PC, cycle, ins, ldsd_tag):
     # dest_tag
     if ins.split(' ')[0]=='Sd': # SD
         ROB[-1].dest_tag = ldsd_tag
+    elif ins.split(' ')[0]=='Bne': # BNE
+        ROB[-1].dest_tag = int(ins.split(' ')[-1]) 
     else: # ALU and LD instructions
         ROB[-1].dest_tag = ins.split(' ')[1]
     # issue 
@@ -82,6 +84,48 @@ def put_ins_into_rs(station, index, ins, ROB, rat_int, rat_fp):
         entry.valid_2nd = 1
     # dest_tag
     entry.dest_tag = ROB[-1].ROB_tag
+
+# function: put bne into rs
+def put_bne_into_rs(rs_int_adder, index, ins, rat_int, rat_fp, ROB):
+    entry = rs_int_adder[index]
+    entry.busy = 1
+    entry.op = ins.split(' ')[0]
+    # reg 1
+    register = ins.split(' ')[1] # register name 
+    if register[0] == 'F':
+        if (type(rat_fp[int(register[1:])]) == str):
+            entry.tag_1st = rat_fp[int(register[1:])]
+            entry.valid_1st = 0
+        else:
+            entry.value_1st = rat_fp[int(register[1:])]
+            entry.valid_1st = 1
+    elif register[0] == 'R':
+        if (type(rat_int[int(register[1:])]) == str):
+            entry.tag_1st = rat_int[int(register[1:])]
+            entry.valid_1st = 0
+        else:
+            entry.value_1st = rat_int[int(register[1:])]
+            entry.valid_1st = 1
+    else:
+        pass
+    # reg 2
+    register = ins.split(' ')[2] # register name 
+    if register[0] == 'F':
+        if (type(rat_fp[int(register[1:])]) == str):
+            entry.tag_2nd = rat_fp[int(register[1:])]
+            entry.valid_2nd = 0
+        else:
+            entry.value_2nd = rat_fp[int(register[1:])]
+            entry.valid_2nd = 1
+    elif register[0] == 'R':
+        if (type(rat_int[int(register[1:])]) == str):
+            entry.tag_2nd = rat_int[int(register[1:])]
+            entry.valid_2nd = 0
+        else:
+            entry.value_2nd = rat_int[int(register[1:])]
+            entry.valid_2nd = 1
+    # dest_tag
+    entry.dest_tag = ROB[-1].ROB_tag 
 
 # function: put ins into ld_sd_queue
 def put_ins_into_ldsd(ldsd_tag, ld_sd_queue, ins, ROB, rat_int, rat_fp):
@@ -187,6 +231,17 @@ def issue(cycle, PC, instructions, ROB, size_ROB,
             update_rat(ROB, rat_int, rat_fp)
             # PC
             PC.PC +=1
+    # Bne 
+    elif (op=='Bne'):
+        # check space
+        if (len(ROB)<size_ROB)&(check_rs_space(rs_int_adder)>=0):
+            # put ins into ROB
+            put_ins_into_ROB(ROB, size_ROB, PC, cycle, ins, '')
+            # put ins into rs_int_adder
+            index = check_rs_space(rs_int_adder)
+            put_bne_into_rs(rs_int_adder, index, ins, rat_int, rat_fp, ROB)
+            # PC
+            PC.valid = 0
     else:
         pass
 
