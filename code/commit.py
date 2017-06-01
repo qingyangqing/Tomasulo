@@ -7,13 +7,13 @@
 
 # function: print ROB entry 
 def print_ROB(entry, instructions):
-    item = instructions[entry.PC] + '  '
-    item = item + str(entry.issue) + '  '
-    item = item + str(entry.exe) + '  '
-    item = item + str(entry.mem) + '  '
-    item = item + str(entry.cdb) + '  '
-    item = item + str(entry.commit) + '  '
-    print (item)
+    item = instructions[entry.PC].ljust(30)
+    item += str(entry.issue).ljust(15) 
+    item += str(entry.exe).ljust(15) 
+    item += str(entry.mem).ljust(15)
+    item += str(entry.cdb).ljust(15)
+    item += str(entry.commit)
+    print(item)
 # function: modify architectual reg
 def modify_arch_reg(entry, reg_int, reg_fp):
     if entry.dest_tag[0] == 'F':

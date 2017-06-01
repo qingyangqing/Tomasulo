@@ -80,6 +80,16 @@ PC.PC = 0
 PC.valid = 1 
 cycle = 1
 
+# print title 
+item = ''.ljust(30)
+item += 'ISSUE'.ljust(15)
+item += 'EXE'.ljust(15)
+item += 'MEM'.ljust(15)
+item += 'WB'.ljust(15)
+item += 'COMMIT'.ljust(15)
+print (item)
+
+# main
 while (len(ROB)>0)|(cycle==1):
     
     '''ISSUE stage'''
