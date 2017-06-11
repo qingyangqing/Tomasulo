@@ -1,12 +1,9 @@
 Tomasulo Algorithm Simulation
+* includes instructions of int_add, fp_add, fp_multi, ld, sd, branch;
+* implements ROB, RAT, load-store-queue;
+* implements out-of-order processing and memory disambiguation; 
+* doesn't include branch prediction
 
-How-to: 
+How to run: 
 
 cd code; python -i main.py 
-
-step1. no branch unit 
-
-step2. branch without prediction 
-
-step3*. branch with prediction
- 
