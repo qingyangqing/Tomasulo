@@ -47,4 +47,3 @@ def commit(ROB, reg_int, reg_fp, cycle, instructions):
                         print_ROB(entry, instructions)
             else:
                 pass
-

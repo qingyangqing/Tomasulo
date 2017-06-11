@@ -83,13 +83,6 @@ def fu_exe(fu, fu_results, ROB, time_fu, cycle, PC):
             # remove from fu 
             fu.popleft()
 
-# function: find ROB entry by tag
-def find_ROB_entry(ROB, tag):
-    for index in range(len(ROB)):
-        if ROB[index].ROB_tag == tag:
-            break
-    return index
-
 # function: ld_sd_execution 
 def ld_sd_execution(ld_sd_exe, time_ld_sd_exe, ld_sd_queue, ROB, cycle):
     if ld_sd_exe.busy == 1:
