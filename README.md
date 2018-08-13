@@ -4,6 +4,6 @@ Tomasulo Algorithm Simulation
 * implements out-of-order processing and memory disambiguation; 
 * doesn't include branch prediction.
 
-How to run: 
-
-cd code; python -i main.py 
+How to run:
+cd code
+python main.py
