@@ -5,5 +5,5 @@ Tomasulo Algorithm Simulation
 * doesn't include branch prediction.
 
 How to run:
-cd code
+cd code;
 python main.py
